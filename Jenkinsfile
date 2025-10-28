@@ -57,19 +57,18 @@ pipeline {
             }
         }
 
-       stage('Deploy Container') {
+        stage('Deploy Container') {
             steps {
                 echo '🚀 Deploying container via Docker Compose...'
                 script {
                     sh """
                     if [ -f docker-compose.yml ]; then
-                        # Replace image tag in docker-compose.yml
+                        # Cập nhật image tag từ Jenkins
                         sed -i "s|image: lekimtanloc/spring-boot-template:.*|image: lekimtanloc/spring-boot-template:${DOCKER_TAG}|" docker-compose.yml
-                        # Start container
+                        # Recreate container với image mới
+                        docker compose down || true
                         docker compose pull || true
                         docker compose up -d --force-recreate
-                        # Kiểm tra logs nhanh
-                        docker compose logs --tail=20 springboot-app
                     else
                         echo "docker-compose.yml not found, skipping deploy."
                     fi
@@ -77,6 +76,7 @@ pipeline {
                 }
             }
         }
+
     }
 
     post {
