@@ -70,6 +70,7 @@ pipeline {
                     echo "⚠️ docker-compose.yml not found, skipping deploy."
                 fi
                 """
+                }
             }
         }
     }
