@@ -1,9 +1,7 @@
 pipeline {
-
     agent any
     environment {
         DOCKER_IMAGE = "lekimtanloc/spring-boot-template"
-        DOCKER_TAG = "v1"
         REGISTRY_CREDENTIAL = '777172c9-f65b-4520-99bb-098e9a079c75' // ID credentials trong Jenkins
     }
 
@@ -12,6 +10,16 @@ pipeline {
             steps {
                 git branch: 'main',
                     url: 'https://github.com/thdev-mobile-team/spring-boot-template.git'
+            }
+        }
+
+        stage('Set Docker Tag') {
+            steps {
+                script {
+                    // Lấy commit hash ngắn làm tag Docker
+                    env.DOCKER_TAG = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
+                    echo "Docker tag will be: ${env.DOCKER_TAG}"
+                }
             }
         }
 
@@ -49,20 +57,19 @@ pipeline {
             }
         }
 
-        stage('Deploy Container') {
-            steps {
-                echo '🚀 Deploying container via Docker Compose...'
-                script {
-                    sh '''
-                        if [ -f docker-compose.yml ]; then
-                            docker compose down || true
-                            docker compose pull || true
-                            docker compose up -d
-                        else
-                            echo "⚠️ docker-compose.yml not found, skipping deploy."
-                        fi
-                    '''
-                }
+       stage('Deploy Container') {
+        steps {
+            echo '🚀 Deploying container via Docker Compose...'
+            script {
+                sh """
+                if [ -f docker-compose.yml ]; then
+                    docker compose down || true
+                    docker compose pull || true
+                    DOCKER_TAG=${DOCKER_TAG} docker compose up -d
+                else
+                    echo "⚠️ docker-compose.yml not found, skipping deploy."
+                fi
+                """
             }
         }
     }

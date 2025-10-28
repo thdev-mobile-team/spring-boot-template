@@ -1,6 +1,6 @@
 services:
   springboot-app:
-    image: lekimtanloc/spring-boot-template:v1
+    image: lekimtanloc/spring-boot-template:${DOCKER_TAG}
     container_name: springboot-app
     restart: unless-stopped
     ports:
