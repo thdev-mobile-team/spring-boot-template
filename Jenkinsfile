@@ -63,11 +63,13 @@ pipeline {
                 script {
                     sh """
                     if [ -f docker-compose.yml ]; then
-                        # Cập nhật tag trong docker-compose.yml
-                        sed -i "s|image: ${DOCKER_IMAGE}:.*|image: ${DOCKER_IMAGE}:${DOCKER_TAG}|" docker-compose.yml
-                        # Recreate container với image mới, giữ image cũ
+                        # Replace image tag in docker-compose.yml
+                        sed -i "s|image: lekimtanloc/spring-boot-template:.*|image: lekimtanloc/spring-boot-template:${DOCKER_TAG}|" docker-compose.yml
+                        # Start container
                         docker compose pull || true
                         docker compose up -d --force-recreate
+                        # Kiểm tra logs nhanh
+                        docker compose logs --tail=20 springboot-app
                     else
                         echo "docker-compose.yml not found, skipping deploy."
                     fi
