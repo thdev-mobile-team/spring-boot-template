@@ -63,6 +63,7 @@ pipeline {
                 echo '🚀 Deploying container via Docker Compose...'
                 script {
                     sh """
+                        cd ${env.WORKSPACE}
                         if [ -f docker-compose.yml ]; then
                             # Cập nhật tag trong docker-compose.yml
                             sed -i "s|image: lekimtanloc/spring-boot-template:.*|image: lekimtanloc/spring-boot-template:${DOCKER_TAG}|" docker-compose.yml
