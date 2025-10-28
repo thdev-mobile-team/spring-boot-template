@@ -1,6 +1,14 @@
 pipeline {
-    agent any
 
+    agent {
+        docker {
+            image 'eclipse-temurin:21-jdk-jammy'
+            args '''
+                -v /var/run/docker.sock:/var/run/docker.sock
+                --user 1001:988
+            '''
+        }
+    }
     environment {
         DOCKER_IMAGE = "lekimtanloc/spring-boot-template"
         DOCKER_TAG = "v1"
