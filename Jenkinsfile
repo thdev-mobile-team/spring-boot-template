@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         DOCKER_IMAGE = "lekimtanloc/spring-boot-template"
-        REGISTRY_CREDENTIAL = '777172c9-f65b-4520-99bb-098e9a079c75' // ID credentials trong Jenkins
+        REGISTRY_CREDENTIAL = '777172c9-f65b-4520-99bb-098e9a079c75'
     }
 
     stages {
@@ -17,7 +17,6 @@ pipeline {
         stage('Set Docker Tag') {
             steps {
                 script {
-                    // Lấy commit hash ngắn làm tag Docker
                     env.DOCKER_TAG = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
                     echo "Docker tag will be: ${env.DOCKER_TAG}"
                 }
@@ -35,7 +34,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 echo '🐳 Building Docker image...'
-                sh "docker build --no-cache -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
+                sh "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
             }
         }
 
@@ -63,11 +62,8 @@ pipeline {
                 echo '🚀 Deploying container via Docker Compose...'
                 script {
                     sh """
-                        cd ${env.WORKSPACE}
                         if [ -f docker-compose.yml ]; then
-                            # Cập nhật tag trong docker-compose.yml
                             sed -i "s|image: lekimtanloc/spring-boot-template:.*|image: lekimtanloc/spring-boot-template:${DOCKER_TAG}|" docker-compose.yml
-                            # Recreate container với image mới
                             docker compose down || true
                             docker compose pull || true
                             docker compose up -d --force-recreate

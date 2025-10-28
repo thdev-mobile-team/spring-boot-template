@@ -1,44 +1,46 @@
-
-#BUILD STAGE
-
+#####################################
+# ===== BUILD STAGE =====
+#####################################
 FROM eclipse-temurin:21-jdk-jammy AS build
 
+# Thư mục làm việc trong container
 WORKDIR /workspace
 
-# Copy file build config
-COPY gradlew gradlew.bat build.gradle ./
+# Copy file cấu hình Gradle (bắt buộc phải có settings.gradle)
+COPY gradlew gradlew.bat build.gradle settings.gradle ./
 COPY gradle/ gradle/
 
-# Cấp quyền excute cho gradlew
+# Cấp quyền chạy cho gradlew (tránh lỗi permission)
 RUN chmod +x gradlew
 
-# Kéo dependency Gradle 
-RUN --mount=type=cache,target=/root/.gradle \
-    ./gradlew --no-daemon -q help
+# Kéo dependency Gradle để cache (giúp build nhanh hơn ở lần sau)
+RUN --mount=type=cache,target=/root/.gradle ./gradlew --no-daemon -q help
 
-# Copy source 
+# Copy source code
 COPY src/ src/
 
-# Build jar SpringBoot
-RUN --mount=type=cache,target=/root/.gradle \
-    ./gradlew --no-daemon clean bootJar -x test
+# Build file jar Spring Boot (bỏ qua test để build nhanh)
+RUN --mount=type=cache,target=/root/.gradle ./gradlew --no-daemon clean bootJar -x test
 
 
-
-#RUNTIME STAGE
-
+#####################################
+# ===== RUNTIME STAGE =====
+#####################################
 FROM eclipse-temurin:21-jre-jammy AS runtime
 
+# Tạo user không đặc quyền để chạy app
 RUN useradd --system --uid 1001 --home /home/devops --shell /usr/sbin/nologin devops
 
 WORKDIR /opt/app
 
-# Copy jar đã build sang stage runtime
-COPY --from=build /workspace/build/libs/spring-boot-template.jar /opt/app/app.jar
+# Copy file jar từ stage build
+COPY --from=build /workspace/build/libs/*.jar /opt/app/app.jar
 
-# Chạy port 8060
+# Mở port ứng dụng
 EXPOSE 8060
 
+# Chạy với user devops
 USER devops
 
+# Lệnh chạy ứng dụng
 ENTRYPOINT ["java","-jar","/opt/app/app.jar"]
