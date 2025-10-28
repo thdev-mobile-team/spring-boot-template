@@ -2,7 +2,13 @@ services:
   springboot-app:
     image: lekimtanloc/spring-boot-template:v1
     container_name: springboot-app
-    network_mode: "host"
+    restart: unless-stopped
+    ports:
+      - "8060:8060"
     environment:
       - SERVER_PORT=8060
-    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
