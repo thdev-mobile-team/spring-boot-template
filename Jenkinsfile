@@ -18,6 +18,7 @@ pipeline {
         stage('Build JAR') {
             steps {
                 echo '🔧 Building Spring Boot application...'
+                sh 'chmod +x gradlew'
                 sh './gradlew clean bootJar -x test'
             }
         }
