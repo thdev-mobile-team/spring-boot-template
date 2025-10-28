@@ -58,21 +58,20 @@ pipeline {
         }
 
        stage('Deploy Container') {
-        steps {
-            echo '🚀 Deploying container via Docker Compose...'
-            script {
-               sh """
-                if [ -f docker-compose.yml ]; then
-                    # Cập nhật tag trong docker-compose.yml
-                    sed -i "s|image: ${DOCKER_IMAGE}:.*|image: ${DOCKER_IMAGE}:${DOCKER_TAG}|" docker-compose.yml
-                    # Recreate container với image mới
-                    docker compose down || true
-                    docker compose pull || true
-                    docker compose up -d --force-recreate
-                else
-                    echo "docker-compose.yml not found, skipping deploy."
-                fi
-                """
+            steps {
+                echo '🚀 Deploying container via Docker Compose...'
+                script {
+                    sh """
+                    if [ -f docker-compose.yml ]; then
+                        # Cập nhật tag trong docker-compose.yml
+                        sed -i "s|image: ${DOCKER_IMAGE}:.*|image: ${DOCKER_IMAGE}:${DOCKER_TAG}|" docker-compose.yml
+                        # Recreate container với image mới, giữ image cũ
+                        docker compose pull || true
+                        docker compose up -d --force-recreate
+                    else
+                        echo "docker-compose.yml not found, skipping deploy."
+                    fi
+                    """
                 }
             }
         }

@@ -1,6 +1,8 @@
+version: "3.9"
+
 services:
   springboot-app:
-    image: lekimtanloc/spring-boot-template:${DOCKER_TAG}
+    image: lekimtanloc/spring-boot-template:latest
     container_name: springboot-app
     restart: unless-stopped
     ports:
