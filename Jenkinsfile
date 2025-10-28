@@ -1,8 +1,9 @@
 pipeline {
     agent any
+
     environment {
         DOCKER_IMAGE = "lekimtanloc/spring-boot-template"
-        REGISTRY_CREDENTIAL = '777172c9-f65b-4520-99bb-098e9a079c75' // Jenkins credentials ID
+        REGISTRY_CREDENTIAL = '777172c9-f65b-4520-99bb-098e9a079c75' // ID credentials trong Jenkins
     }
 
     stages {
@@ -34,7 +35,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 echo '🐳 Building Docker image...'
-                sh "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
+                sh "docker build --no-cache -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
             }
         }
 
@@ -63,16 +64,15 @@ pipeline {
                 script {
                     sh """
                         if [ -f docker-compose.yml ]; then
-                            # Dừng và remove container cũ (nếu có)
-                            docker rm -f springboot-app || true
-
-                            # Cập nhật tag mới trong docker-compose.yml
+                            # Cập nhật tag trong docker-compose.yml
                             sed -i "s|image: ${DOCKER_IMAGE}:.*|image: ${DOCKER_IMAGE}:${DOCKER_TAG}|" docker-compose.yml
-
                             # Recreate container với image mới
+                            docker compose down || true
+                            docker compose pull || true
                             docker compose up -d --force-recreate
+                            echo "✅ Container updated successfully"
                         else
-                            echo "docker-compose.yml not found, skipping deploy."
+                            echo "⚠️ docker-compose.yml not found, skipping deploy."
                         fi
                     """
                 }
