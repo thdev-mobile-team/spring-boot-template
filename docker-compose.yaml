@@ -1,0 +1,8 @@
+services:
+  springboot-app:
+    image: lekimtanloc/spring-boot-template:v1
+    container_name: springboot-app
+    network_mode: "host"
+    environment:
+      - SERVER_PORT=8060
+    restart: unless-stopped
