@@ -25,7 +25,7 @@ pipeline {
 
         stage('Build JAR') {
             steps {
-                echo '🔧 Building Spring Boot application...'
+                echo 'Building Spring Boot application...'
                 sh 'chmod +x gradlew'
                 sh './gradlew clean bootJar -x test'
             }
@@ -33,14 +33,14 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                echo '🐳 Building Docker image...'
+                echo 'Building Docker image...'
                 sh "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
             }
         }
 
         stage('Push to Docker Hub') {
             steps {
-                echo '📤 Pushing image to Docker Hub...'
+                echo 'Pushing image to Docker Hub...'
                 script {
                     withCredentials([usernamePassword(
                         credentialsId: "${REGISTRY_CREDENTIAL}",
@@ -59,7 +59,7 @@ pipeline {
 
         stage('Deploy Container') {
             steps {
-                echo '🚀 Deploying container via Docker Compose...'
+                echo 'Deploying container by Docker Compose...'
                 script {
                     sh """
                         if [ -f docker-compose.yml ]; then
@@ -67,9 +67,9 @@ pipeline {
                             docker compose down || true
                             docker compose pull || true
                             docker compose up -d --force-recreate
-                            echo "✅ Container updated successfully"
+                            echo "Container updated successfully"
                         else
-                            echo "⚠️ docker-compose.yml not found, skipping deploy."
+                            echo "Skipping deploy."
                         fi
                     """
                 }
@@ -79,10 +79,10 @@ pipeline {
 
     post {
         success {
-            echo '✅ CI/CD pipeline executed successfully!'
+            echo 'Successfully!'
         }
         failure {
-            echo '❌ CI/CD pipeline failed!'
+            echo 'Failed!'
         }
     }
 }

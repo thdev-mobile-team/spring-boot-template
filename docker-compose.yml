@@ -6,9 +6,7 @@ services:
     container_name: springboot-app
     restart: unless-stopped
     ports:
-      - "8060:8060"
-    environment:
-      - SERVER_PORT=8060
+      - "8060:8080"
     logging:
       driver: "json-file"
       options:

@@ -5,10 +5,10 @@ FROM eclipse-temurin:21-jdk-jammy AS build
 
 WORKDIR /workspace
 
-# Copy file Gradle config (copy có điều kiện)
+# Copy file Gradle config 
 COPY gradlew gradlew.bat build.gradle* settings.gradle* ./
 COPY gradle/ gradle/
-
+#Cấp quyền
 RUN chmod +x gradlew
 
 RUN --mount=type=cache,target=/root/.gradle ./gradlew --no-daemon -q help || true
@@ -29,7 +29,7 @@ WORKDIR /opt/app
 
 COPY --from=build /workspace/build/libs/*.jar /opt/app/app.jar
 
-EXPOSE 8060
+EXPOSE 8080
 
 USER devops
 
