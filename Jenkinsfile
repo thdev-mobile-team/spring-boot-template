@@ -68,11 +68,12 @@ pipeline {
 
                             # Sửa values.yaml bằng yq chạy trong container
                             docker run --rm \
-                            -v "$PWD:/work" -w /work \
-                            -e DOCKER_IMAGE="${DOCKER_IMAGE}" \
-                            -e DOCKER_TAG="${DOCKER_TAG}" \
-                            mikefarah/yq:4 \
-                            yq -i '.image.repository = env(DOCKER_IMAGE) | .image.tag = env(DOCKER_TAG)' "$CHART_PATH"
+                                -v "$PWD:/work" -w /work \
+                                -e DOCKER_IMAGE="${DOCKER_IMAGE}" \
+                                -e DOCKER_TAG="${DOCKER_TAG}" \
+                                mikefarah/yq:4 \
+                                yq -i '(.image.repository = env(DOCKER_IMAGE)) | (.image.tag = env(DOCKER_TAG))' "$CHART_PATH"
+
 
                             # Cấu hình Git và push
                             git config user.name "thdev-mobile-team"
