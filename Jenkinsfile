@@ -4,12 +4,13 @@ pipeline {
     environment {
         DOCKER_IMAGE = "lekimtanloc/spring-boot-template"
         REGISTRY_CREDENTIAL = '777172c9-f65b-4520-99bb-098e9a079c75'
+        GITHUB_CREDENTIAL = 'github-cred'  // <-- ID credential GitHub bạn vừa tạo trong Jenkins
         CD_REPO_URL = 'https://github.com/thdev-mobile-team/spring-boot-template-deploy.git'
         CD_REPO_BRANCH = 'main'
     }
 
     stages {
-        stage('Checkout') {
+        stage('Checkout Source') {
             steps {
                 git branch: 'main',
                     url: 'https://github.com/thdev-mobile-team/spring-boot-template.git'
@@ -55,24 +56,29 @@ pipeline {
 
         stage('Update Helm values.yaml') {
             steps {
+                echo 'Updating image tag in Helm values.yaml...'
                 script {
-                    echo 'Updating image tag in Helm values.yaml...'
-                    sh '''
-                        # Clone CD repo (chứa Helm chart)
-                        rm -rf cd-repo
-                        git clone ${CD_REPO_URL} cd-repo
-                        cd cd-repo/environments/dev
+                    withCredentials([usernamePassword(
+                        credentialsId: "${GITHUB_CREDENTIAL}",
+                        usernameVariable: 'GIT_USER',
+                        passwordVariable: 'GIT_TOKEN'
+                    )]) {
+                        sh '''
+                            rm -rf cd-repo
+                            git clone https://${GIT_USER}:${GIT_TOKEN}@github.com/thdev-mobile-team/spring-boot-template-deploy.git cd-repo
+                            cd cd-repo/environments/dev
 
-                        # Cập nhật image.tag
-                        yq e '.image.repository = "${DOCKER_IMAGE}"' -i values.yaml
-                        yq e '.image.tag = "${DOCKER_TAG}"' -i values.yaml
+                            # Cập nhật image.tag
+                            yq e ".image.repository = \\"${DOCKER_IMAGE}\\"" -i values.yaml
+                            yq e ".image.tag = \\"${DOCKER_TAG}\\"" -i values.yaml
 
-                        git config user.name "Jenkins CI"
-                        git config user.email "jenkins@ci.local"
-                        git add values.yaml
-                        git commit -m "Update image tag to ${DOCKER_TAG}"
-                        git push origin ${CD_REPO_BRANCH}
-                    '''
+                            git config user.name "thdev-mobile-team"
+                            git config user.email "lekimtanloc2002@gmail.com"
+                            git add values.yaml
+                            git commit -m "Update image tag to ${DOCKER_TAG}" || echo "No changes to commit"
+                            git push origin ${CD_REPO_BRANCH}
+                        '''
+                    }
                 }
             }
         }
