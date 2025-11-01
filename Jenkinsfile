@@ -4,12 +4,13 @@ pipeline {
     environment {
         DOCKER_IMAGE = "lekimtanloc/spring-boot-template"
         REGISTRY_CREDENTIAL = '777172c9-f65b-4520-99bb-098e9a079c75'
-        GITHUB_CREDENTIAL = 'github-cred'  // <-- ID credential GitHub bạn vừa tạo trong Jenkins
+        GITHUB_CREDENTIAL = 'github-cred'  // ID credential GitHub bạn tạo trong Jenkins
         CD_REPO_URL = 'https://github.com/thdev-mobile-team/spring-boot-template.git'
         CD_REPO_BRANCH = 'main'
     }
 
     stages {
+
         stage('Checkout Source') {
             steps {
                 git branch: 'main',
@@ -54,7 +55,7 @@ pipeline {
             }
         }
 
-       stage('Update Helm values.yaml') {
+        stage('Update Helm values.yaml') {
             steps {
                 echo 'Updating image tag in Helm values.yaml...'
                 script {
@@ -66,17 +67,18 @@ pipeline {
                         sh '''
                             CHART_PATH="charts/rpe-spring-boot-template/values.yaml"
 
-                            echo "yq -i '(.image.repository = env(DOCKER_IMAGE)) | (.image.tag = env(DOCKER_TAG))' '$CHART_PATH'" > /tmp/yq-update.sh
-                            chmod +x /tmp/yq-update.sh
+                            echo "Updating repository and tag in $CHART_PATH"
+                            # Cập nhật dòng chứa repository:
+                            sed -i "s|^\\([[:space:]]*repository:[[:space:]]*\\).*|\\1${DOCKER_IMAGE}|" "$CHART_PATH"
+                            # Cập nhật dòng chứa tag:
+                            sed -i "s|^\\([[:space:]]*tag:[[:space:]]*\\).*|\\1${DOCKER_TAG}|" "$CHART_PATH"
 
-                            docker run --rm \
-                            -v "$PWD:/work" -w /work \
-                            -e DOCKER_IMAGE="${DOCKER_IMAGE}" \
-                            -e DOCKER_TAG="${DOCKER_TAG}" \
-                            mikefarah/yq:4 \
-                            sh /tmp/yq-update.sh
+                            # Kiểm tra kết quả
+                            echo "--- Updated values.yaml ---"
+                            grep -E 'repository:|tag:' "$CHART_PATH" || true
+                            echo "---------------------------"
 
-                            # Cấu hình Git và push
+                            # Git config và push
                             git config user.name "thdev-mobile-team"
                             git config user.email "lekimtanloc2002@gmail.com"
 
@@ -91,7 +93,6 @@ pipeline {
                 }
             }
         }
-
     }
 
     post {
