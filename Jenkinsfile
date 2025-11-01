@@ -5,7 +5,7 @@ pipeline {
         DOCKER_IMAGE = "lekimtanloc/spring-boot-template"
         REGISTRY_CREDENTIAL = '777172c9-f65b-4520-99bb-098e9a079c75'
         GITHUB_CREDENTIAL = 'github-cred'  // <-- ID credential GitHub bạn vừa tạo trong Jenkins
-        CD_REPO_URL = 'https://github.com/thdev-mobile-team/spring-boot-template-deploy.git'
+        CD_REPO_URL = 'https://github.com/thdev-mobile-team/spring-boot-template.git'
         CD_REPO_BRANCH = 'main'
     }
 
