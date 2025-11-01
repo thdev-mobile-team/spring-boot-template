@@ -64,18 +64,20 @@ pipeline {
                         passwordVariable: 'GIT_TOKEN'
                     )]) {
                         sh '''
-                            # Đường dẫn tới values.yaml trong repo hiện tại
                             CHART_PATH="charts/rpe-spring-boot-template/values.yaml"
 
-                            # Cập nhật image.repository và image.tag
-                            yq e ".image.repository = \\"${DOCKER_IMAGE}\\"" -i "$CHART_PATH"
-                            yq e ".image.tag = \\"${DOCKER_TAG}\\"" -i "$CHART_PATH"
+                            # Sửa values.yaml bằng yq chạy trong container
+                            docker run --rm \
+                            -v "$PWD:/work" -w /work \
+                            -e DOCKER_IMAGE="${DOCKER_IMAGE}" \
+                            -e DOCKER_TAG="${DOCKER_TAG}" \
+                            mikefarah/yq:4 \
+                            yq -i '.image.repository = env(DOCKER_IMAGE) | .image.tag = env(DOCKER_TAG)' "$CHART_PATH"
 
-                            # Cấu hình Git user
+                            # Cấu hình Git và push
                             git config user.name "thdev-mobile-team"
                             git config user.email "lekimtanloc2002@gmail.com"
 
-                            # Thay đổi remote URL để push có xác thực
                             CURRENT_URL=$(git remote get-url origin)
                             git remote set-url origin "https://${GIT_USER}:${GIT_TOKEN}@${CURRENT_URL#https://}"
 
