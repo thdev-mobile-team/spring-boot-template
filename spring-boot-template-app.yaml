@@ -1,0 +1,21 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: spring-boot-template
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/thdev-mobile-team/spring-boot-template.git
+    targetRevision: main
+    path: charts/rpe-spring-boot-template
+    helm:
+      valueFiles:
+        - values.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: springboot
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
