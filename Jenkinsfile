@@ -66,15 +66,15 @@ pipeline {
                         sh '''
                             CHART_PATH="charts/rpe-spring-boot-template/values.yaml"
 
-                            # Sửa values.yaml bằng yq chạy trong container
+                            echo "yq -i '(.image.repository = env(DOCKER_IMAGE)) | (.image.tag = env(DOCKER_TAG))' '$CHART_PATH'" > /tmp/yq-update.sh
+                            chmod +x /tmp/yq-update.sh
+
                             docker run --rm \
-                                -v "$PWD:/work" -w /work \
-                                -e DOCKER_IMAGE="${DOCKER_IMAGE}" \
-                                -e DOCKER_TAG="${DOCKER_TAG}" \
-                                mikefarah/yq:4 \
-                                sh -c "yq -i '(.image.repository = env(DOCKER_IMAGE)) | (.image.tag = env(DOCKER_TAG))' '$CHART_PATH'"
-
-
+                            -v "$PWD:/work" -w /work \
+                            -e DOCKER_IMAGE="${DOCKER_IMAGE}" \
+                            -e DOCKER_TAG="${DOCKER_TAG}" \
+                            mikefarah/yq:4 \
+                            sh /tmp/yq-update.sh
 
                             # Cấu hình Git và push
                             git config user.name "thdev-mobile-team"
@@ -91,6 +91,7 @@ pipeline {
                 }
             }
         }
+
     }
 
     post {
