@@ -4,6 +4,8 @@ pipeline {
     environment {
         DOCKER_IMAGE = "lekimtanloc/spring-boot-template"
         REGISTRY_CREDENTIAL = '777172c9-f65b-4520-99bb-098e9a079c75'
+        CD_REPO_URL = 'https://github.com/thdev-mobile-team/spring-boot-template-deploy.git'
+        CD_REPO_BRANCH = 'main'
     }
 
     stages {
@@ -31,16 +33,9 @@ pipeline {
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Build & Push Docker Image') {
             steps {
-                echo 'Building Docker image...'
-                sh "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
-            }
-        }
-
-        stage('Push to Docker Hub') {
-            steps {
-                echo 'Pushing image to Docker Hub...'
+                echo 'Building and pushing Docker image...'
                 script {
                     withCredentials([usernamePassword(
                         credentialsId: "${REGISTRY_CREDENTIAL}",
@@ -49,6 +44,7 @@ pipeline {
                     )]) {
                         sh """
                             echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                            docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} .
                             docker push ${DOCKER_IMAGE}:${DOCKER_TAG}
                             docker logout
                         """
@@ -57,21 +53,26 @@ pipeline {
             }
         }
 
-        stage('Deploy Container') {
+        stage('Update Helm values.yaml') {
             steps {
-                echo 'Deploying container by Docker Compose...'
                 script {
-                    sh """
-                        if [ -f docker-compose.yml ]; then
-                            sed -i "s|image: lekimtanloc/spring-boot-template:.*|image: lekimtanloc/spring-boot-template:${DOCKER_TAG}|" docker-compose.yml
-                            docker compose down || true
-                            docker compose pull || true
-                            docker compose up -d --force-recreate
-                            echo "Container updated successfully"
-                        else
-                            echo "Skipping deploy."
-                        fi
-                    """
+                    echo 'Updating image tag in Helm values.yaml...'
+                    sh '''
+                        # Clone CD repo (chứa Helm chart)
+                        rm -rf cd-repo
+                        git clone ${CD_REPO_URL} cd-repo
+                        cd cd-repo/environments/dev
+
+                        # Cập nhật image.tag
+                        yq e '.image.repository = "${DOCKER_IMAGE}"' -i values.yaml
+                        yq e '.image.tag = "${DOCKER_TAG}"' -i values.yaml
+
+                        git config user.name "Jenkins CI"
+                        git config user.email "jenkins@ci.local"
+                        git add values.yaml
+                        git commit -m "Update image tag to ${DOCKER_TAG}"
+                        git push origin ${CD_REPO_BRANCH}
+                    '''
                 }
             }
         }
@@ -79,10 +80,10 @@ pipeline {
 
     post {
         success {
-            echo 'Successfully!'
+            echo '✅ CI pipeline completed successfully — ArgoCD will deploy automatically.'
         }
         failure {
-            echo 'Failed!'
+            echo '❌ CI pipeline failed.'
         }
     }
 }
