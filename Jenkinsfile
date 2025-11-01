@@ -54,7 +54,7 @@ pipeline {
             }
         }
 
-        stage('Update Helm values.yaml') {
+       stage('Update Helm values.yaml') {
             steps {
                 echo 'Updating image tag in Helm values.yaml...'
                 script {
@@ -64,17 +64,22 @@ pipeline {
                         passwordVariable: 'GIT_TOKEN'
                     )]) {
                         sh '''
-                            rm -rf cd-repo
-                            git clone https://${GIT_USER}:${GIT_TOKEN}@github.com/thdev-mobile-team/spring-boot-template-deploy.git cd-repo
-                            cd cd-repo/environments/dev
+                            # Đường dẫn tới values.yaml trong repo hiện tại
+                            CHART_PATH="charts/rpe-spring-boot-template/values.yaml"
 
-                            # Cập nhật image.tag
-                            yq e ".image.repository = \\"${DOCKER_IMAGE}\\"" -i values.yaml
-                            yq e ".image.tag = \\"${DOCKER_TAG}\\"" -i values.yaml
+                            # Cập nhật image.repository và image.tag
+                            yq e ".image.repository = \\"${DOCKER_IMAGE}\\"" -i "$CHART_PATH"
+                            yq e ".image.tag = \\"${DOCKER_TAG}\\"" -i "$CHART_PATH"
 
+                            # Cấu hình Git user
                             git config user.name "thdev-mobile-team"
                             git config user.email "lekimtanloc2002@gmail.com"
-                            git add values.yaml
+
+                            # Thay đổi remote URL để push có xác thực
+                            CURRENT_URL=$(git remote get-url origin)
+                            git remote set-url origin "https://${GIT_USER}:${GIT_TOKEN}@${CURRENT_URL#https://}"
+
+                            git add "$CHART_PATH"
                             git commit -m "Update image tag to ${DOCKER_TAG}" || echo "No changes to commit"
                             git push origin ${CD_REPO_BRANCH}
                         '''
