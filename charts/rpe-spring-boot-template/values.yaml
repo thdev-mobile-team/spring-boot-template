@@ -1,6 +1,6 @@
 image:
   repository: lekimtanloc/spring-boot-template
-  tag: 33061a2
+  tag: 558f653
   pullPolicy: IfNotPresent
 
 service:
